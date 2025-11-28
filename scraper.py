@@ -41,7 +41,6 @@ class DallasCountyScraper:
             raise ValueError("Attorney is required")
         
         self.attorney = attorney
-        self.current_attorney_case_count = 0  # Track cases for current attorney
         self.case_type_filter = (CASE_TYPE or "").strip().lower()
         self.playwright = None
         self.browser = None
@@ -321,7 +320,7 @@ class DallasCountyScraper:
                     logger.info(f"First row case is from {parsed_date.year} (>= {MINIMUM_CASE_YEAR}), proceeding...")
                     return True
                 else:
-                    logger.info(f"First row case is from {parsed_date.year} (< {MINIMUM_CASE_YEAR}). Skipping this attorney.")
+                    logger.warning(f"First row case is from {parsed_date.year} (< {MINIMUM_CASE_YEAR}). Skipping this attorney.")
                     return False
                     
             except ValueError:
@@ -468,20 +467,7 @@ class DallasCountyScraper:
         except Exception as e:
             logger.error(f"Error getting case rows: {e}")
             return []
-    
-    # Read the textual case-type cell from the provided row.
-    def extract_case_type_from_row(self, row):
-        try:
-            # Try to find case type in the row
-            cells = row.locator("td").all()
-            for cell in cells:
-                text = (cell.text_content() or "").strip().lower()
-                if "felony" in text:
-                    return text
-            return ""
-        except:
-            return ""
-    
+            
     # Extract the case number text from the row if available.
     def get_case_number_from_row(self, row):
         try:
@@ -551,11 +537,9 @@ class DallasCountyScraper:
                 case_data["attorney_last_name"] = self.attorney['last_name']
                 
                 self.results.append(case_data)
-                self.current_attorney_case_count += 1
                 case_number = case_data.get("case_number", "UNKNOWN CASE NUMBER")
                 logger.info(
-                    f"Case added to results: {case_number} for attorney {case_data['attorney_name']} "
-                    f"(attorney case #{self.current_attorney_case_count}, total cases: {len(self.results)})"
+                    f"Case added to results: {case_number} for attorney {case_data['attorney_name']} (total cases: {len(self.results)})"
                 )
                 return case_data
             
@@ -654,20 +638,20 @@ class DallasCountyScraper:
             return False        
     
     # Process all felony cases currently visible on the active results page.
-    def process_felony_cases(self, felony_rows):
+    def process_felony_cases(self, case_type_rows):
         try:
-            if not felony_rows:
+            if not case_type_rows:
                 logger.info("No felony cases found on the current page")
                 return
             
             # Use while loop with index so we can properly handle recovery
             i = 0
-            while i < len(felony_rows):
+            while i < len(case_type_rows):
                 try:
-                    # Always get fresh row reference from current felony_rows
-                    row = felony_rows[i]
+                    # Always get fresh row reference from current case_type_rows
+                    row = case_type_rows[i]
                     
-                    logger.info(f"Processing felony case {i+1} of {len(felony_rows)} on current page...")
+                    logger.info(f"Processing case {i+1} of {len(case_type_rows)} on current page...")
                     
                     case_number = self.get_case_number_from_row(row)
                     if case_number:
@@ -701,7 +685,7 @@ class DallasCountyScraper:
                                 logger.info("Session recovered successfully, continuing from where we left off")
                                 # Refresh felony rows after recovery and restart from beginning
                                 # (processed cases will be skipped via processed_case_numbers)
-                                felony_rows = self.get_case_type_rows()
+                                case_type_rows = self.get_case_type_rows()
                                 i = 0
                                 continue
                             else:
@@ -709,7 +693,7 @@ class DallasCountyScraper:
                                 return
                         
                         # Refresh felony rows after returning to the list
-                        felony_rows = self.get_case_type_rows()
+                        case_type_rows = self.get_case_type_rows()
                     
                     i += 1
                     
@@ -721,7 +705,7 @@ class DallasCountyScraper:
                         if self.recover_session():
                             logger.info("Session recovered, continuing processing")
                             # Refresh and restart from beginning (processed cases will be skipped)
-                            felony_rows = self.get_case_type_rows()
+                            case_type_rows = self.get_case_type_rows()
                             i = 0
                             continue
                         else:
@@ -852,11 +836,11 @@ class DallasCountyScraper:
 
             # Step 9: Prepare felony case extraction
             logger.info("Preparing to identify felony case rows...")
-            felony_rows = self.get_case_type_rows()
+            case_type_rows = self.get_case_type_rows()
 
             # Step 10: Process felony cases 
             logger.info("Processing felony cases on current results page...")
-            self.process_felony_cases(felony_rows)
+            self.process_felony_cases(case_type_rows)
             
             return True
         except Exception as e:
