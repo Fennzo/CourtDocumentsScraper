@@ -1,8 +1,7 @@
 # Dallas County Courts Portal Scraper - Flow Diagrams
 
 **Version:** 1.0  
-**Last Updated:** January 2025  
-**Status:** Production
+**Last Updated:** 2025-11-27
 
 This document provides comprehensive visual flow diagrams of the system architecture, execution flow, and data processing pipeline using Mermaid syntax. All diagrams are renderable in GitHub, GitLab, and most modern markdown viewers.
 
@@ -771,7 +770,7 @@ flowchart TD
 ---
 
 **Diagram Version**: 1.0  
-**Last Updated**: November 2025  
+**Last Updated**: 2025-11-27
 **Maintainer**: Jin
 
 For detailed technical specifications, refer to `TECHNICAL_DOCUMENTATION.md`.
