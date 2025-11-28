@@ -1,7 +1,7 @@
 # Dallas County Courts Portal Scraper - Technical Documentation
 
-**Version:** 2.0  
-**Last Updated:** 2025-01-27  
+**Version:** 1.0  
+**Last Updated:** 2025-11-27  
 **Status:** Production
 
 ---

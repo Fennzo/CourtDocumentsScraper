@@ -1,6 +1,6 @@
 # Dallas County Courts Portal Scraper - Flow Diagrams
 
-**Version:** 2.0  
+**Version:** 1.0  
 **Last Updated:** January 2025  
 **Status:** Production
 
@@ -770,8 +770,8 @@ flowchart TD
 
 ---
 
-**Diagram Version**: 2.0  
-**Last Updated**: January 2025  
-**Maintainer**: Development Team
+**Diagram Version**: 1.0  
+**Last Updated**: November 2025  
+**Maintainer**: Jin
 
 For detailed technical specifications, refer to `TECHNICAL_DOCUMENTATION.md`.
