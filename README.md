@@ -472,7 +472,12 @@ If you encounter a bug or have a feature request:
 - Include comments for complex logic
 - Maintain existing code style and structure
 
-### Areas for Contribution
+### Contribution
+Contributions are welcome! This project is open source and licensed under the MIT License. By submitting a pull request, you agree that:
+
+- Your contribution will be licensed under the same license as the project (MIT License)
+- You have the right to grant these rights
+- Your contribution does not violate any third-party rights
 
 - Bug fixes and error handling improvements
 - Performance optimizations
@@ -504,6 +509,8 @@ For detailed technical information, refer to:
 ---
 
 ## ⚖️ License
+
+This project is licensed under the [MIT License]
 
 **Note**: This tool is designed for legitimate use cases such as legal research, case tracking, and public record access. Users are responsible for complying with the Dallas County Courts Portal's terms of service and applicable laws regarding web scraping and data collection.
 
