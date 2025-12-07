@@ -9,9 +9,6 @@ from utils import setup_browser
 
 logger = logging.getLogger(__name__)
 
-# Removed: browser setup functions moved to utils.py for reusability across the project
-
-
 # Print a quick inventory of inputs, selects, buttons, links, and tables on the page.
 def inspect_page(page, page_name):
     logger.info(f"\n{'='*60}")

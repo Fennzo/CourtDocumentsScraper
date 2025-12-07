@@ -179,6 +179,7 @@ def extract_case_details(page):
         "case_number": "",
         "file_date": "",
         "judicial_officer": "",
+        "court_name": "",
         "case_status": "",
         "case_type": "",
         "charge_description": "",
@@ -237,6 +238,42 @@ def extract_case_details(page):
             officer_selectors
         )
         case_data["judicial_officer"] = record_field_extraction("Judicial Officer", case_data["judicial_officer"], field_errors)
+        
+        # Court venue/name
+        court_selectors = [
+            "p:has-text('Court')",
+            "text=Court",
+            "[id*='court']",
+            "td:has-text('Court') + td",
+            "th:has-text('Court') + td"
+        ]
+        # Try extracting from case info lines first
+        court_value = extract_value_from_lines(case_info_lines, "Court")
+        if not court_value:
+            # Try direct selector extraction
+            court_value = extract_value_by_selectors(
+                page,
+                court_selectors,
+                regex=r'Court\s+(.+)'  # Extract everything after "Court"
+            )
+        # If still not found, try to find paragraph element with "Court" in text
+        if not court_value:
+            try:
+                court_paragraph = page.locator("p:has-text('Court')").first
+                if court_paragraph.count() > 0:
+                    court_text = court_paragraph.text_content() or ""
+                    # Extract court name (everything after "Court")
+                    match = re.search(r'Court\s+(.+)', court_text, re.IGNORECASE)
+                    if match:
+                        court_value = match.group(1).strip()
+                    else:
+                        # If no match, use full text if it contains "Court"
+                        if "Court" in court_text:
+                            court_value = court_text.strip()
+            except Exception as exc:
+                logger.debug(f"Error extracting court from paragraph: {exc}")
+        
+        case_data["court_name"] = record_field_extraction("Court", court_value, field_errors, required=False)
         
         # Case status
         case_status_selectors = [
