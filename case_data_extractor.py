@@ -662,11 +662,16 @@ def extract_bond_amount(page):
 # Check if any of the charge keywords exist in the page text.
 # Args:
 #     page: Playwright page object
-#     charge_keywords: List of keywords to search for
+#     charge_keywords: List of keywords to search for, or empty/None to match all cases
 # Returns:
-#     True if any keyword is found, False otherwise
+#     True if any keyword is found (or if charge_keywords is empty/None), False otherwise
 def check_for_charge_keyword(page, charge_keywords):
     try:
+        # If charge_keywords is empty or None, accept all cases (no filtering)
+        if charge_keywords is None or (isinstance(charge_keywords, list) and len(charge_keywords) == 0):
+            logger.info("No charge keywords specified, accepting all cases")
+            return True
+        
         # Get all text from page
         page_text = page.locator("body").text_content() or ""
         page_text_lower = page_text.lower()
@@ -674,6 +679,14 @@ def check_for_charge_keyword(page, charge_keywords):
         # Handle both list and single string for backwards compatibility
         if isinstance(charge_keywords, str):
             charge_keywords = [charge_keywords]
+        
+        # Filter out empty strings from the list
+        charge_keywords = [kw for kw in charge_keywords if kw and kw.strip()]
+        
+        # If after filtering we have no keywords, accept all cases
+        if not charge_keywords:
+            logger.info("No valid charge keywords after filtering, accepting all cases")
+            return True
         
         # Check for any charge keyword
         for keyword in charge_keywords:

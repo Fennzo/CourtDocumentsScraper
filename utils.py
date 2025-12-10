@@ -332,13 +332,15 @@ def validate_config():
         if not attorney["first_name"] or not attorney["last_name"]:
             return False, f"Error: Attorney {idx+1} first_name and last_name cannot be empty"
     
-    # Validate charge keywords
-    if not CHARGE_KEYWORDS or len(CHARGE_KEYWORDS) == 0:
+    # Validate charge keywords (allow empty list/None to get all cases)
+    # Empty list or None is valid - it means no keyword filtering
+    if CHARGE_KEYWORDS is not None and not isinstance(CHARGE_KEYWORDS, list):
         return False, (
-            "Error: CHARGE_KEYWORDS list must be set in config.py with at least one keyword\n"
+            "Error: CHARGE_KEYWORDS must be a list (can be empty [] to get all cases)\n"
             "Please update config.py with charge keywords.\n"
-            "Example format:\n"
-            '  CHARGE_KEYWORDS = ["ASSAULT", "THEFT"]'
+            "Example formats:\n"
+            '  CHARGE_KEYWORDS = ["ASSAULT", "THEFT"]  # Filter by keywords\n'
+            '  CHARGE_KEYWORDS = []  # Get all cases (no keyword filtering)'
         )
     
     return True, None
@@ -346,13 +348,34 @@ def validate_config():
 
 # Display current configuration to console
 def display_config():
-    from config import ATTORNEYS, CHARGE_KEYWORDS
+    from config import ATTORNEYS, CHARGE_KEYWORDS, CASE_TYPE
     
     print(f"\nAttorneys to search ({len(ATTORNEYS)}):")
     for idx, attorney in enumerate(ATTORNEYS, 1):
         print(f"  {idx}. {attorney['first_name']} {attorney['last_name']}")
     
-    print(f"\nCharge keywords to filter ({len(CHARGE_KEYWORDS)}):")
-    for idx, keyword in enumerate(CHARGE_KEYWORDS, 1):
-        print(f"  {idx}. {keyword}")
+    # Display CASE_TYPE configuration
+    print(f"\nCase type filter:")
+    if CASE_TYPE is None:
+        print("  (None - will get all case types)")
+    elif isinstance(CASE_TYPE, list):
+        if len(CASE_TYPE) == 0:
+            print("  (Empty list - will get all case types)")
+        else:
+            print(f"  {len(CASE_TYPE)} case type(s):")
+            for idx, case_type in enumerate(CASE_TYPE, 1):
+                print(f"    {idx}. {case_type}")
+    else:
+        print(f"  {CASE_TYPE}")
+    
+    # Display CHARGE_KEYWORDS configuration
+    print(f"\nCharge keywords to filter:")
+    if CHARGE_KEYWORDS is None:
+        print("  (None - will get all cases regardless of charge)")
+    elif len(CHARGE_KEYWORDS) == 0:
+        print("  (Empty list - will get all cases regardless of charge)")
+    else:
+        print(f"  {len(CHARGE_KEYWORDS)} keyword(s):")
+        for idx, keyword in enumerate(CHARGE_KEYWORDS, 1):
+            print(f"    {idx}. {keyword}")
 

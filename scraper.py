@@ -41,7 +41,15 @@ class DallasCountyScraper:
             raise ValueError("Attorney is required")
         
         self.attorney = attorney
-        self.case_type_filter = (CASE_TYPE or "").strip().lower()
+        # Handle CASE_TYPE as string, list, or empty/None
+        if CASE_TYPE is None or (isinstance(CASE_TYPE, list) and len(CASE_TYPE) == 0):
+            self.case_type_filters = []  # Empty means get all case types
+        elif isinstance(CASE_TYPE, str):
+            self.case_type_filters = [CASE_TYPE.strip().lower()] if CASE_TYPE.strip() else []
+        elif isinstance(CASE_TYPE, list):
+            self.case_type_filters = [ct.strip().lower() for ct in CASE_TYPE if ct and ct.strip()]
+        else:
+            self.case_type_filters = []
         self.playwright = None
         self.browser = None
         self.page = None
@@ -430,7 +438,8 @@ class DallasCountyScraper:
             logger.warning(f"Error setting items per page: {e}")
             return False
     
-    # Collect every visible row whose text includes the configured case type.
+    # Collect every visible row whose text includes the configured case type(s).
+    # If case_type_filters is empty, returns all rows.
     def get_case_type_rows(self):
         try:
             # Try multiple selectors for case rows
@@ -441,7 +450,6 @@ class DallasCountyScraper:
                 "tr:has(a[href*='case'])"
             ]
             
-            target_case_type = self.case_type_filter
             case_type_rows = []
             for selector in row_selectors:
                 try:
@@ -449,10 +457,17 @@ class DallasCountyScraper:
                     if not elements:
                         continue
 
+                    # If no filters specified, return all rows
+                    if not self.case_type_filters:
+                        case_type_rows = elements
+                        break
+                    
+                    # Filter rows by case type(s)
                     filtered_rows = []
                     for element in elements:
                         text = (element.text_content() or "").lower()
-                        if target_case_type in text:
+                        # Check if any case type filter matches
+                        if any(case_type in text for case_type in self.case_type_filters):
                             filtered_rows.append(element)
 
                     if filtered_rows:
@@ -462,7 +477,15 @@ class DallasCountyScraper:
                     continue
             
             if not case_type_rows:
-                logger.info(f"No rows matched case type filter '{target_case_type}'")
+                if self.case_type_filters:
+                    logger.info(f"No rows matched case type filter(s) '{self.case_type_filters}'")
+                else:
+                    logger.info("No case rows found on page")
+            else:
+                if self.case_type_filters:
+                    logger.info(f"Found {len(case_type_rows)} row(s) matching case type filter(s) '{self.case_type_filters}'")
+                else:
+                    logger.info(f"Found {len(case_type_rows)} case row(s) (no case type filter applied)")
             return case_type_rows
         except Exception as e:
             logger.error(f"Error getting case rows: {e}")
@@ -637,11 +660,11 @@ class DallasCountyScraper:
             logger.error(f"Error waiting for search results: {exc}")
             return False        
     
-    # Process all felony cases currently visible on the active results page.
+    # Process all cases currently visible on the active results page.
     def process_felony_cases(self, case_type_rows):
         try:
             if not case_type_rows:
-                logger.info("No felony cases found on the current page")
+                logger.info("No cases found on the current page")
                 return
             
             # Use while loop with index so we can properly handle recovery
@@ -834,12 +857,15 @@ class DallasCountyScraper:
             # Step 8: Expand results to 200 rows when possible
             self.set_items_per_page()
 
-            # Step 9: Prepare felony case extraction
-            logger.info("Preparing to identify felony case rows...")
+            # Step 9: Prepare case type extraction
+            if self.case_type_filters:
+                logger.info(f"Preparing to identify case type rows matching: {self.case_type_filters}...")
+            else:
+                logger.info("Preparing to identify all case rows (no case type filter)...")
             case_type_rows = self.get_case_type_rows()
 
-            # Step 10: Process felony cases 
-            logger.info("Processing felony cases on current results page...")
+            # Step 10: Process cases 
+            logger.info(f"Processing {len(case_type_rows)} case(s) on current results page...")
             self.process_felony_cases(case_type_rows)
             
             return True
